@@ -3,7 +3,7 @@ pipeline:
     image: banzaicloud/plugin-pipeline-client:latest
     pull: true
 
-    cluster_name: "Seba-CICD-1"
+    cluster_name: "SebaCICD1"
     cluster_provider: "azure"
     cluster_location: "eastus"
     azure_resource_group: "sebastian_eastus"
