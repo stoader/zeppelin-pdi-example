@@ -1,54 +1,47 @@
 pipeline:
   create_cluster:
-    image: banzaicloud/plugin-pipeline-client:latest
-    pull: true
+    image: banzaicloud/plugin-pipeline-client:0.3.0
+    cluster_name: "seba-cicd-01"
+    cluster_provider: amazon
+    amazon_node_instance_type: m4.xlarge
+    amazon_node_spot_price: 0.3
+    amazon_node_min_count: 2
+    amazon_node_max_count: 3
 
-    cluster_name: "sebascicd1"
-    cluster_provider: "azure"
-    cluster_location: "eastus"
-    azure_resource_group: "sebastian_eastus"
-    azure_node_count: 2
-    node_instance_type: "Standard_B4ms"
-
-    secrets: [plugin_endpoint, plugin_token]
+    secrets: [ plugin_endpoint, plugin_token ]
 
   install_monitoring:
-    image: banzaicloud/plugin-pipeline-client:latest
+    image: banzaicloud/plugin-pipeline-client:0.3.0
     deployment_name: "banzaicloud-stable/pipeline-cluster-monitor"
     deployment_release_name: "monitor"
 
     secrets: [plugin_endpoint, plugin_token]
 
   install_zeppelin:
-    image: banzaicloud/plugin-pipeline-client:latest
+    image: banzaicloud/plugin-pipeline-client:0.3.0
     deployment_name: "banzaicloud-stable/zeppelin-spark"
     deployment_release_name: "release-1"
     deployment_state: "created"
     deployment_values:
       zeppelin:
         sparkSubmitOptions:
-          eventLogDirectory: "wasb://spark@{{ .AZURE_STORAGE_ACCOUNT }}.blob.core.windows.net/"
-          azureStorageAccountName: "{{ .AZURE_STORAGE_ACCOUNT }}"
-          azureStorageAccessKey: "{{ .AZURE_STORAGE_ACCOUNT_ACCESS_KEY }}"
+          eventLogDirectory: "s3a://seba-spark-test/"
       historyServer:
         enabled: true
       spark:
         spark-hs:
           app:
-            logDirectory: "wasb://spark@{{ .AZURE_STORAGE_ACCOUNT }}.blob.core.windows.net/"
-            azureStorageAccountName: "{{ .AZURE_STORAGE_ACCOUNT }}"
-            azureStorageAccessKey: "{{ .AZURE_STORAGE_ACCOUNT_ACCESS_KEY }}"
-    
-    secrets: [plugin_endpoint, plugin_token, azure_storage_account, azure_storage_account_access_key]
+            logDirectory: "s3a://seba-spark-test/"
+    secrets: [plugin_endpoint, plugin_token]
 
   remote_checkout:
-    image: banzaicloud/drone-plugin-k8s-client:latest
+    image: banzaicloud/plugin-k8s-proxy:0.3.0
     original_image: plugins/git
 
   run:
-    image: banzaicloud/drone-plugin-k8s-client:latest
-    original_image: banzaicloud/zeppelin-client:latest
+    image: banzaicloud/plugin-k8s-proxy:0.3.0
+    original_image: banzaicloud/zeppelin-client:0.3.0
     notebook_name: "sf-police-incidents"
-    notebook_file_path: "sf-police-incidents-azure.json"
+    notebook_file_path: "sf-police-incidents-aws.json"
     notebook_state: "running"
     zeppelin_endpoint: "http://release-1-zeppelin:8080/zeppelin"
